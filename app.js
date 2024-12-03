@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const morgan = require('morgan');
 require('dotenv').config();
 
 const app = express();
@@ -9,13 +10,16 @@ const app = express();
 const api = process.env.API_URL;
 const CONNECTION_STRING = process.env.CONN_STRING;
 
-const userRouter = require('./routes/user');
+//import route files
+const userRoutes = require('./routes/user');
+const postRoutes = require('./routes/post');
 
 
 //middlewares
 app.use(bodyParser.json());
-app.use(`${api}/user`, userRouter);
-
+app.use(morgan('tiny'));
+app.use(`${api}/user`, userRoutes);
+app.use(`${api}/post`, postRoutes);
 
 //install mongoose
 //connect database here

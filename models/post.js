@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const postSchema = mongoose.Schema({
-    category: String,
-    content: String,
+    category: {type: String, required: true},
+    content: {type: String, required: true},
     createdby: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     datecreated: {type: Date, default: Date.now},
     likedBy: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],

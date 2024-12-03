@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 const userSchema = mongoose.Schema({
     name : {type: String, required: true},
-    email: String,
-    password: String,
+    email: {type: String, required: true},
+    password: {type: String, required: true},
     phoneNumber: String,
     dateOfBirth: Date,
     avatar: String,
@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema({
     commentCreated: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}],
     commentsLiked: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}],
     postsLiked: [{type: mongoose.Schema.Types.ObjectId, ref: 'Post'}],
-    isAdmin: Boolean,
+    isAdmin: {type: Boolean, default: false},
     country: String,
     city: String
 });
