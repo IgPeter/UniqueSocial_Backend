@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authJs = require('../middlewares/auth');
 
-
 router.post('/create', async (req, res)=> { //localhost:3000/api/v1/user/create
     try{
         const existingUser = await User.find({email: req.body.email});
@@ -53,6 +52,8 @@ router.post('/login', async (req, res) => {
 
         const result = await bcrypt.compare(req.body.password, user.password);
 
+        console.log(result);
+
         if(user && result){
             const token = jwt.sign({userId: user._id, isAdmin: user.isAdmin}, 
                 process.env.TOKEN_SECRET, {expiresIn: '1d'});
@@ -61,6 +62,8 @@ router.post('/login', async (req, res) => {
                 message: "user authenticated",
                 token: token
             });
+        }else{
+            res.status(400).send("Password is incorrect");
         }
     }catch(error){
         res.status(500).json({
@@ -71,7 +74,7 @@ router.post('/login', async (req, res) => {
 
 })
 
-router.get('/', authJs, async (req, res)=> {
+router.get('/', async (req, res)=> {
     const isAdmin = req.decoded.isAdmin;
     
     if(!isAdmin){
@@ -81,10 +84,87 @@ router.get('/', authJs, async (req, res)=> {
     const users = await User.find();
 
     res.status(200).json({
-        message: "Users fetched successfully",
+        message: "Users fetched successfully",   
         users: users
     })
-})
+});
 
+//updating user information
+router.patch('/profile', authJs, async (req, res) => {
+    const userId = req.decoded.userId;
+    const userInfo = req.body;
+
+    const user = await User.findById(userId);
+
+    if(!user){
+        return res.status(400).send("Couldn't find user");
+    }
+
+    for(propName in userInfo){
+        switch(propName){
+            case 'name':
+                user.name = userInfo.name;
+                break;
+            case 'email':
+                user.email = userInfo.email;
+                break;
+            case 'phoneNumber':
+                user.phoneNumber = userInfo.phoneNumber;
+                break;
+            case 'dateOfBirth':
+                user.dateOfBirth = userInfo.dateOfBirth;
+                break;
+            case 'avatar':
+                user.avatar = userInfo.avatar;
+                break;
+            case 'country':
+                user.country = userInfo.country;
+                break;
+            case 'city':
+                user.city = userInfo.city;
+                break;
+            case 'admin':
+                user.isAdmin = userInfo.admin;
+                break;
+            default:
+                user = user;
+        }
+    }
+
+    try{
+        const response = await user.save();
+        res.status(200).json({message: "User profile updated successfully", user: response});
+    }catch(error){
+        res.status(500).json({
+            message: "Something occurred could not update user profile", 
+            error: error
+        });
+    }
+});
+
+//Admin specific api to delete a user
+router.delete('/:userId', authJs, async (req, res) => {
+    const userId = req.params.userId;
+    const isAdmin = req.decoded.isAdmin;
+
+    if(!isAdmin){
+        return res.status(400).send("Unauthorized, you are not an admin");
+    }
+
+    
+    try{
+        const deletedUser = await User.findByIdAndDelete(userId);
+
+        if(!deletedUser){
+            return res.status(404).send("User does not exist");
+        }
+    
+        res.status(200).json({message: "User deleted successfully", deletedUser: deletedUser})
+    }catch(error){
+        res.status(400).json({message: "Error ocurred, user was not deleted", 
+            error: error
+        })
+    }
+})
 
 module.exports = router;
